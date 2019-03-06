@@ -1,0 +1,170 @@
+Sub hard()
+
+'==========================================================================
+'= This macro is run on the active sheet of Multiple_year_stock_data.xlsx =
+'= There are 2 parts:                                                     =
+'= Part 1 runs through the original data and creates a report with a row  =
+'=        for each ticker with the stock's total volume and yearly change =
+'= Part 2 runs through the report from part 1 and reports the stocks with =
+'=        the greatest variations in price and the greatest volume traded =
+'==========================================================================
+
+'		==============================
+'		= PART 1 (easy and moderate) =
+'		==============================
+
+'------------------------------
+'Write headers for report data
+'------------------------------
+
+Cells(1, 9).Value = "Ticker"
+Cells(1, 10).Value = "Yearly Change"
+Cells(1, 11).Value = "Percent Change"
+Cells(1, 12).Value = "Total Stock Volume"
+
+'-----------------------
+'Define variables needed
+'-----------------------
+
+'RowHeader is the number of rows on the sheet above the actual data. Common practice.
+RowHeader = 1
+'variable TickerPlace keeps each output result on a different line. Starts with 2
+TickerPlace = 1 + RowHeader
+'VolumeYear is the variable that holds the volume totals for each stock. Long number.
+Dim VolumeYear As Double
+VolumeYear = 0
+'Extract the maximum row so I don't have to know the total number of rows in the sheet
+'"- RowHeader" at the end to remove the empty row at the bottom
+Dim MaxRow As Long
+MaxRow = ActiveSheet.Cells(Rows.Count, 1).End(xlUp).Row - RowHeader
+'StockOpen is the variable that holds the opening price for the year.
+Dim StockOpen As Double
+'The initial value is set for the sheet, then changed inside the loop through ticker change
+StockOpen = Cells(RowHeader + 1, 3).Value
+'StockClose is the variable that holds the closing price for the year.
+Dim StockClose As Double
+
+'----------------------------------------------------------------------------------------------
+'Loop through the rows, picking up the different stock tickers and gathering the report numbers
+'----------------------------------------------------------------------------------------------
+
+For i = 1 To MaxRow
+
+'Compare tickers from current row and next, to detect the last row for current ticker
+'This test will only be true for the last row of every ticker
+If Cells(i + RowHeader, 1).Value <> Cells(i + RowHeader + 1, 1).Value Then
+    'Add the last volume to the total so far
+    VolumeYear = VolumeYear + Cells(i + RowHeader, 7)
+    'Copy the current ticker and total volume to the report
+    Cells(TickerPlace, 9) = Cells(i + RowHeader, 1)
+    Cells(TickerPlace, 12).Value = VolumeYear
+    'Capture the closing price
+    StockClose = Cells(i + RowHeader, 6).Value
+        'Calculate the open and close difference and percent change
+        '----------------------------------------------------------
+        Cells(TickerPlace, 10).Value = StockClose - StockOpen
+        'Color flag positve and negative price changes
+        If Cells(TickerPlace, 10).Value < 0 Then
+            Cells(TickerPlace, 10).Interior.ColorIndex = 3
+            ElseIf Cells(TickerPlace, 10).Value > 0 Then
+            Cells(TickerPlace, 10).Interior.ColorIndex = 4
+        End If
+        'Calculate the percent change and post to report
+        'Using If statement to prevent division by zero
+        If StockOpen = 0 Then
+            Cells(TickerPlace, 11).Value = 0
+            Cells(TickerPlace, 11).Interior.ColorIndex = 3
+            Cells(TickerPlace, 13).Value = "Open =" & StockOpen & ", Close =" & StockClose
+            Cells(TickerPlace, 13).Interior.ColorIndex = 3
+        Else
+            Cells(TickerPlace, 11).Value = ((StockClose - StockOpen) / StockOpen)
+            Cells(TickerPlace, 11).NumberFormat = "0.00%"
+        End If
+    'Move one row down on the report to write the next ticker results
+    TickerPlace = TickerPlace + 1
+    'Reset the volume so the next ticker volume can be calculated
+    VolumeYear = 0
+    'Reset the StockOpen variable to capture the initial price of the next row (new ticker)
+    StockOpen = Cells(i + RowHeader + 1, 3).Value
+    
+'All but the last row of each ticker will go through this Else and add the volumes in them
+Else
+    VolumeYear = VolumeYear + Cells(i + RowHeader, 7)
+End If
+
+Next i
+
+'Adjusting the report columns to fit the data width
+Columns("I:M").Select
+Selection.EntireColumn.AutoFit
+
+'		==============================
+'		=       PART 2 (hard)        =
+'		==============================
+
+'-------------------------------------------------
+'Find and report the greatest % changes and volume
+'-------------------------------------------------
+
+'Write headers for report data
+Cells(1, 16).Value = "Ticker"
+Cells(1, 17).Value = "Value"
+Cells(2, 15).Value = "Greatest % Increase"
+Cells(3, 15).Value = "Greatest % Decrease"
+Cells(4, 15).Value = "Greatest Total Volume"
+
+'Set variables
+'-------------
+
+'Variables that hold the values needed to report. 
+Dim GreatIncTicker As String
+Dim GreatDecTicker As String
+Dim GreatVolTicker As String
+
+'Initial values set to first row of data
+Dim GreatInc As Double
+GreatInc = Cells(2, 11).Value
+Dim GreatDec As Double
+GreatDec = Cells(2, 11).Value
+Dim GreatVol As Double
+GreatVol = Cells(2, 12).Value
+
+'Set the maximum row to search for data
+'Note that the variable TickerPlace was incremented by 1 after reaching the last row, so I need to subtract it
+RepMaxRow = TickerPlace - 1
+
+'Loop through the source report to search for the data
+'-----------------------------------------------------
+
+For i = 3 To RepMaxRow
+
+If Cells(i, 11).Value > GreatInc Then
+    GreatInc = Cells(i, 11).Value
+    GreatIncTicker = Cells(i, 9).Value
+End If
+If Cells(i, 11).Value < GreatDec Then
+    GreatDec = Cells(i, 11).Value
+    GreatDecTicker = Cells(i, 9).Value
+End If
+If Cells(i, 12).Value > GreatVol Then
+    GreatVol = Cells(i, 12).Value
+    GreatVolTicker = Cells(i, 9).Value
+End If
+
+Next i
+'Write the results to the table
+Cells(2, 16).Value = GreatIncTicker
+Cells(3, 16).Value = GreatDecTicker
+Cells(4, 16).Value = GreatVolTicker
+Cells(2, 17).Value = GreatInc
+Cells(3, 17).Value = GreatDec
+Cells(4, 17).Value = GreatVol
+
+'Formatting the percentages
+Range("Q2:Q3").NumberFormat = "0.00%"
+
+'Adjusting the report columns to fit the data width
+Columns("O:Q").Select
+Selection.EntireColumn.AutoFit
+
+End Sub

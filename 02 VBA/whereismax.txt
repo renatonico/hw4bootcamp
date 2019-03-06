@@ -1,0 +1,59 @@
+Sub WhereIsMax()
+    Dim rLook As Range, Biggest As Variant, Where As String
+    Set rLook = Range("A1:Z100")
+    Biggest = Application.WorksheetFunction.Max(rLook)
+    Where = rLook.Find(What:=Biggest, After:=rLook(1)).Address
+    MsgBox Where
+End Sub
+
+----------------------------------------------------------------
+Determine smallest and largest value in range
+----------------------------------------------------------------
+Sub Smallest()
+'Cells with dates also return a value, and get covered for determining smallest value. Percentages will convert and return numerics.
+
+Dim rng As Range
+Dim dblMin As Double
+
+'Set range from which to determine smallest value
+Set rng = Sheet1.Range("A1:Z100")
+
+'Worksheet function MIN returns the smallest value in a range 
+
+dblMin = Application.WorksheetFunction.Min(rng)
+
+'Displays smallest value
+MsgBox dblMin
+End Sub
+
+Determine largest value in range
+
+
+Sub Largest()
+'Cells with dates also return a value, and get covered for determining largest value. Percentages will convert and return numerics.
+
+Dim rng As Range
+Dim dblMax As Double
+
+ 
+
+'Set range from which to determine largest value
+Set rng = Sheet1.Range("A1:Z100")
+
+
+'Worksheet function MAX returns the largest value in a range 
+
+dblMax = Application.WorksheetFunction.Max(rng)
+
+'Displays largest value
+MsgBox dblMax
+
+----------------------------------------------------------------
+VLOOKUP
+----------------------------------------------------------------
+Sub findProduct()
+ Dim prodNum As Integer, prodDesc As String
+ prodNum = Range("F2").Value
+ prodDesc = Application.WorksheetFunction.VLookup(prodNum, Range("A1:B51"), 2, FALSE)
+ MsgBox prodDesc
+End Sub
